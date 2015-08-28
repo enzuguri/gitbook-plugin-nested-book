@@ -1,7 +1,7 @@
 'use strict';
 
 var path = require('path');
-var Promise = require('es6-promise').Promise;
+var Promise = require('q');
 var parseNavigation = require('gitbook/lib/utils/navigation');
 var fsUtil = require('gitbook/lib/utils/fs');
 
@@ -178,8 +178,7 @@ function processNestedBook(bookInstance, bookConfig) {
                 updateFiles(folderName, bookInstance)
             ]);
         })
-        .then(function(args) {
-            var folderName = args[0], nLevel = args[1], files = args[2];
+        .spread(function(folderName, nLevel, files) {
             return updateSummary(bookInstance, bookConfig, folderName, files, nLevel);
         });
 }
