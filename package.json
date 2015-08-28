@@ -8,8 +8,7 @@
   },
   "dependencies": {
     "es6-promise": "3.0.2",
-    "gitbook": "2.1.0",
-    "glob": "5.0.14"
+    "gitbook": "2.1.0"
   },
   "repository": {
     "type": "git",

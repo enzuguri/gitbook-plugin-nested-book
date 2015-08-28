@@ -3,8 +3,8 @@
 var fs = require('fs');
 var path = require('path');
 var Promise = require('es6-promise').Promise;
-var glob = require('glob');
 var parseNavigation = require('gitbook/lib/utils/navigation');
+var fsUtil = require('gitbook/lib/utils/fs');
 
 function setupSymlink(bookInstance, bookConfig) {
     var nestedName = bookConfig.nestedName;
@@ -78,19 +78,30 @@ function getNextChapterLevel(bookInstance) {
 }
 
 function updateFiles(folderName, bookInstance) {
-    var files = bookInstance.files;
+    var folderPath = folderName + '/';
+    var ignores = ['SUMMARY.md', 'GLOSSARY.md', 'book.json'];
+    // list all the files in the new folder
+    return fsUtil.list(bookInstance.root + '/' + folderName, {ignoreFiles: ignores, ignoreRules: ignores})
+        .then(function(foundFiles) {
+            return foundFiles
+                // correct the file path by appending the folder name
+                .map(function(filePath) {
+                    return folderPath + filePath;
+                })
+                // ensure that the root directory is also in the list
+                .concat([folderPath]);
+        })
+        .then(function(newFiles) {
+            var files = bookInstance.files;
 
-    var docRoot = path.relative(process.cwd(), bookInstance.root);
-    var nFiles = glob.sync(folderName + '/**/!(SUMMARY|GLOSSARY).md', {cwd: docRoot});
-    nFiles.push(folderName + '/');
+            var idx = files.indexOf(folderName);
+            // splice out the name of the symlink, and replace it with the new files
+            if (idx !== -1) {
+                files.splice.bind(files, idx, 1).apply(null, newFiles);
+            }
 
-    var idx = files.indexOf(folderName);
-    // splice out the name of the symlink
-    if (idx !== -1) {
-        files.splice.bind(files, idx, 1).apply(null, nFiles);
-    }
-
-    return files;
+            return files;
+        });
 }
 
 function updateSummary(bookInstance, bookConfig, folderName, files, nLevel) {
