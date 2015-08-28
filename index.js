@@ -21,10 +21,18 @@ function setupSymlink(bookInstance, bookConfig) {
     return Promise.resolve(nestedName);
 }
 
+/**
+ * Method for modifying a chapter to update with the correct path and adjusted chapter level.
+ */
 function applyChapterModification(chapter, pathPrefix, startLevel, level) {
+    /**
+     * Join the parent level and the new level together with a dot.
+     */
     chapter.level = [startLevel, level].join('.');
-
     if(chapter.path !== null){
+        /**
+         * Only if the path is not null do we prefix the existing path with the known folder name.
+         */
         chapter.path = [pathPrefix, chapter.path].join('/');
     }
 }
@@ -46,9 +54,10 @@ function recurseArticles(articles, pathPrefix, level) {
 }
 
 function recursivelyAdjustLevels(summary, startLevel, pathPrefix) {
-
     var chapters = summary.chapters;
-
+    /**
+     * Start indexing at 1 for chapters underneath the new main chapter
+     */
     var level = 1;
 
     chapters.forEach(function(chapter){
@@ -56,7 +65,9 @@ function recursivelyAdjustLevels(summary, startLevel, pathPrefix) {
         recurseArticles(chapter.articles, pathPrefix, chapter.level);
         level++;
     });
-
+    /**
+     * Return the updated summary, which is the same instance.
+     */
     return summary;
 }
 
@@ -70,6 +81,9 @@ function createNewChapter(bookConfig, level, chapters) {
         introduction: false };
 }
 
+/**
+ * Method for detecting the new available chapter level in the gitbook.
+ */
 function getNextChapterLevel(bookInstance) {
     var chapters = bookInstance.summary.chapters;
     var chapterCount = chapters.length;
@@ -79,23 +93,43 @@ function getNextChapterLevel(bookInstance) {
 
 function updateFiles(folderName, bookInstance) {
     var folderPath = folderName + '/';
+    /**
+     * Ignore files that we will manually process, such as the summary and glossary.
+     */
     var ignores = ['SUMMARY.md', 'GLOSSARY.md', 'book.json'];
-    // list all the files in the new folder
+    /**
+     * Using the fs utilities from gitbook, list out the files in the new directory.
+     */
     return fsUtil.list(bookInstance.root + '/' + folderName, {ignoreFiles: ignores, ignoreRules: ignores})
         .then(function(foundFiles) {
+            /**
+             * For each of the files returned
+             */
             return foundFiles
-                // correct the file path by appending the folder name
+                /**
+                 * ..correct the file path by appending the folder name
+                 */
                 .map(function(filePath) {
                     return folderPath + filePath;
                 })
-                // ensure that the root directory is also in the list
+                /**
+                 * ..ensure that the root directory is also in the list, so that it can be created
+                 */
                 .concat([folderPath]);
         })
         .then(function(newFiles) {
+            /**
+             * Get the array of files currently used by the book
+             */
             var files = bookInstance.files;
-
+            /**
+             * ...and the index of the symlinked directory
+             */
             var idx = files.indexOf(folderName);
-            // splice out the name of the symlink, and replace it with the new files
+            /**
+             * Splice out the name of the symlink, and replace it with the new files.
+             * This is because gitbook cannot copy a symlink, and will throw an error.
+             */
             if (idx !== -1) {
                 files.splice.bind(files, idx, 1).apply(null, newFiles);
             }
@@ -123,7 +157,13 @@ function updateSummary(bookInstance, bookConfig, folderName, files, nLevel) {
     });
 }
 
+/**
+ * Method for processing a nested gitbook
+ */
 function processNestedBook(bookInstance, bookConfig) {
+    /**
+     * Setup the initial symlink to get the folder name
+     */
     return setupSymlink(bookInstance, bookConfig)
         .then(function(folderName) {
             return Promise.all([
@@ -138,9 +178,19 @@ function processNestedBook(bookInstance, bookConfig) {
         });
 }
 
+/**
+ * Exports the gitbook plugin
+ */
 module.exports = {
     hooks: {
+        /**
+         * The "init" hook is run after the book has been parsed, but before any pages have
+         * been generated.
+         */
         init: function() {
+            /**
+             * The function is invoked in the context of book.js which allows us to call it's methods.
+             */
             var book = this;
             var config = book.options.pluginsConfig['nested-book'];
 

@@ -15,6 +15,7 @@
     "url": "ssh://git@github.com:enzuguri/gitbook-plugin-nested-book.git"
   },
   "scripts": {
-    "lint": "eslint index.js --env node --rule 'quotes: [2, single]'"
+    "lint": "eslint index.js --env node --rule 'quotes: [2, single]'",
+    "doc-serve": "connect-docco --port 8082 --dirname ."
   }
 }
