@@ -1,6 +1,5 @@
 'use strict';
 
-var fs = require('fs');
 var path = require('path');
 var Promise = require('es6-promise').Promise;
 var parseNavigation = require('gitbook/lib/utils/navigation');
@@ -12,13 +11,20 @@ function setupSymlink(bookInstance, bookConfig) {
     var nestedBookRoot = path.resolve(bookConfig.path);
     var subFolder = path.join(bookRoot, nestedName);
 
-    var exists = fs.existsSync(subFolder);
-    if (!exists) {
-        var rel = path.relative(bookRoot, nestedBookRoot);
-        fs.symlinkSync(rel, subFolder, 'dir');
-    }
-
-    return Promise.resolve(nestedName);
+    return fsUtil.exists(subFolder)
+        .then(function(exists) {
+            var next;
+            if (!exists) {
+                var rel = path.relative(bookRoot, nestedBookRoot);
+                next = fsUtil.symlink(rel, subFolder, 'dir');
+            } else {
+                next = Promise.resolve(undefined);
+            }
+            return next;
+        })
+        .then(function() {
+            return nestedName;
+        });
 }
 
 /**
