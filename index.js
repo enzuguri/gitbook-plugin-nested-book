@@ -18,7 +18,7 @@ function setupSymlink(bookInstance, bookConfig) {
         fs.symlinkSync(rel, subFolder, 'dir');
     }
 
-    return nestedName;
+    return Promise.resolve(nestedName);
 }
 
 function applyChapterModification(chapter, pathPrefix, startLevel, level) {
@@ -113,11 +113,18 @@ function updateSummary(bookInstance, bookConfig, folderName, files, nLevel) {
 }
 
 function processNestedBook(bookInstance, bookConfig) {
-    var folderName = setupSymlink(bookInstance, bookConfig);
-    var nLevel = getNextChapterLevel(bookInstance);
-    var files = updateFiles(folderName, bookInstance);
-
-    return updateSummary(bookInstance, bookConfig, folderName, files, nLevel);
+    return setupSymlink(bookInstance, bookConfig)
+        .then(function(folderName) {
+            return Promise.all([
+                folderName,
+                getNextChapterLevel(bookInstance),
+                updateFiles(folderName, bookInstance)
+            ]);
+        })
+        .then(function(args) {
+            var folderName = args[0], nLevel = args[1], files = args[2];
+            return updateSummary(bookInstance, bookConfig, folderName, files, nLevel);
+        });
 }
 
 module.exports = {
