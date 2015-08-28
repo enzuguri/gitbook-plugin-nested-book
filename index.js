@@ -70,15 +70,14 @@ function createNewChapter(bookConfig, level, chapters) {
         introduction: false };
 }
 
-function processNestedBook(bookInstance, bookConfig) {
-
-    var folderName = setupSymlink(bookInstance, bookConfig);
-
+function getNextChapterLevel(bookInstance) {
     var chapters = bookInstance.summary.chapters;
     var chapterCount = chapters.length;
     var endChapter = chapters[chapterCount - 1];
-    var nLevel = (Number(endChapter.level) + 1);
+    return (Number(endChapter.level) + 1);
+}
 
+function updateFiles(folderName, bookInstance) {
     var files = bookInstance.files;
 
     var docRoot = path.relative(process.cwd(), bookInstance.root);
@@ -88,10 +87,13 @@ function processNestedBook(bookInstance, bookConfig) {
     var idx = files.indexOf(folderName);
     // splice out the name of the symlink
     if (idx !== -1) {
-       files.splice.bind(files, idx, 1).apply(null, nFiles);
+        files.splice.bind(files, idx, 1).apply(null, nFiles);
     }
 
-    // grab the summary from the nested book
+    return files;
+}
+
+function updateSummary(bookInstance, bookConfig, folderName, files, nLevel) {
     return bookInstance.findFile(folderName + '/SUMMARY').then(function(summary){
         var summaryFile = summary.path;
         return bookInstance.template.renderFile(summaryFile)
@@ -110,6 +112,14 @@ function processNestedBook(bookInstance, bookConfig) {
     });
 }
 
+function processNestedBook(bookInstance, bookConfig) {
+    var folderName = setupSymlink(bookInstance, bookConfig);
+    var nLevel = getNextChapterLevel(bookInstance);
+    var files = updateFiles(folderName, bookInstance);
+
+    return updateSummary(bookInstance, bookConfig, folderName, files, nLevel);
+}
+
 module.exports = {
     hooks: {
         init: function() {
@@ -121,7 +131,6 @@ module.exports = {
                     return processNestedBook(book, bookConfig);
                 });
             }, Promise.resolve(null));
-
         }
     }
 };
