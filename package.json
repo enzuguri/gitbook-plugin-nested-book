@@ -1,0 +1,21 @@
+{
+  "name": "gitbook-plugin-nested-book",
+  "description": "Nested books plugin for GitBook",
+  "main": "index.js",
+  "version": "0.0.1",
+  "engines": {
+    "gitbook": "2.1.0"
+  },
+  "dependencies": {
+    "es6-promise": "3.0.2",
+    "gitbook": "2.1.0",
+    "glob": "5.0.14"
+  },
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@github.com:enzuguri/gitbook-plugin-nested-book.git"
+  },
+  "scripts": {
+    "lint": "eslint index.js --env node --rule 'quotes: [2, single]'"
+  }
+}
